@@ -6,6 +6,7 @@ from mmcv.image import imread
 from mmpose.apis import inference_topdown, init_model
 from mmpose.registry import VISUALIZERS
 from mmpose.structures import merge_data_samples
+from loguru import logger
 
 
 def parse_args():
@@ -78,6 +79,14 @@ def main():
     model.cfg.visualizer.line_width = args.thickness
 
     visualizer = VISUALIZERS.build(model.cfg.visualizer)
+    skeleton_links = model.dataset_meta['skeleton_links']
+    # logger.info(f'skeleton_links: {skeleton_links}')
+    logger.info("meta {}", model.dataset_meta)
+    skeleton_links = skeleton_links[:5]
+    skeleton_links =  [(5, 7), (7, 9), (6, 8), (8, 10), (1, 2), (1, 3), (2, 4), (3, 5), (4, 6)]
+    logger.info(f'skeleton_links first 5: {skeleton_links}')
+    model.dataset_meta['skeleton_links'] = skeleton_links
+    model.dataset_meta['skeleton_link_colors'] = model.dataset_meta['skeleton_link_colors'][:len(skeleton_links)]
     visualizer.set_dataset_meta(
         model.dataset_meta, skeleton_style=args.skeleton_style)
 

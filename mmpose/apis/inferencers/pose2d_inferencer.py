@@ -17,7 +17,7 @@ from mmpose.registry import DATASETS, INFERENCERS
 from mmpose.structures import merge_data_samples
 from .base_mmpose_inferencer import BaseMMPoseInferencer
 from .utils import default_det_models
-
+from loguru import logger
 try:
     from mmdet.apis.det_inferencer import DetInferencer
     has_mmdet = True
@@ -94,6 +94,16 @@ class Pose2DInferencer(BaseMMPoseInferencer):
         self.model = revert_sync_batchnorm(self.model)
 
         # assign dataset metainfo to self.visualizer
+        # TODO delete later
+        logger.info("meta {}", self.model.dataset_meta)
+        skeleton_links = self.model.dataset_meta['skeleton_links']
+        # logger.info(f'skeleton_links: {skeleton_links}')
+        skeleton_links = skeleton_links[:5]
+        skeleton_links =  [(5, 7), (7, 9), (6, 8), (8, 10), (1, 2), (1, 3), (2, 4), (3, 5), (4, 6)]
+        logger.info(f'skeleton_links first 5: {skeleton_links}')
+        self.model.dataset_meta['skeleton_links'] = skeleton_links
+        self.model.dataset_meta['skeleton_link_colors'] = self.model.dataset_meta['skeleton_link_colors'][:len(skeleton_links)]
+        logger.info(type(self.visualizer))
         self.visualizer.set_dataset_meta(self.model.dataset_meta)
 
         # initialize detector for top-down models

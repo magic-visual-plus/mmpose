@@ -362,12 +362,19 @@ class PoseLocalVisualizer(OpencvBackendVisualizer):
                         else:
                             self.draw_lines(
                                 X, Y, color, line_widths=self.line_width)
-
+                need_kpt_ids = set()
+                for sk in self.skeleton:
+                    need_kpt_ids.add(sk[0])
+                    need_kpt_ids.add(sk[1])
+                print(f'need_kpt_ids: {need_kpt_ids}')
                 # draw each point on image
                 for kid, kpt in enumerate(kpts):
                     if score[kid] < kpt_thr or not visible[
                             kid] or kpt_color[kid] is None:
                         # skip the point that should not be drawn
+                        continue
+                    
+                    if kid not in need_kpt_ids:
                         continue
 
                     color = kpt_color[kid]
