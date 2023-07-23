@@ -45,6 +45,7 @@ class BasePoseEstimator(BaseModel, metaclass=ABCMeta):
         self.metainfo = self._load_metainfo(metainfo)
 
         self.backbone = MODELS.build(backbone)
+        self.backbone = self.backbone.to('cuda')
 
         # the PR #2108 and #2126 modified the interface of neck and head.
         # The following function automatically detects outdated
@@ -54,9 +55,11 @@ class BasePoseEstimator(BaseModel, metaclass=ABCMeta):
 
         if neck is not None:
             self.neck = MODELS.build(neck)
+            self.neck = self.neck.to('cuda')
 
         if head is not None:
             self.head = MODELS.build(head)
+            self.head = self.head.to('cuda')
 
         self.train_cfg = train_cfg if train_cfg else {}
         self.test_cfg = test_cfg if test_cfg else {}

@@ -1,6 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from argparse import ArgumentParser
 from typing import Dict
+import time
+from loguru import logger
 
 from mmpose.apis.inferencers import MMPoseInferencer, get_model_aliases
 
@@ -182,4 +184,7 @@ def main():
 
 
 if __name__ == '__main__':
+    start = time.time()
     main()
+    end = time.time()
+    logger.info(f'Inference took {end - start:.2f}s')

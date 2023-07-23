@@ -9,6 +9,7 @@ import json_tricks as json
 import mmcv
 import mmengine
 import numpy as np
+from loguru import logger
 
 from mmpose.apis import inference_topdown
 from mmpose.apis import init_model as init_pose_estimator
@@ -33,8 +34,11 @@ def process_one_image(args,
     """Visualize predicted keypoints (and heatmaps) of one image."""
 
     # predict bbox
+    start = time.time()
     det_result = inference_detector(detector, img)
     pred_instance = det_result.pred_instances.cpu().numpy()
+    det_end_inference = time.time()
+    # logger.info(f'run det model infer cost time: {(det_end_inference - start) * 1000} ms')
     bboxes = np.concatenate(
         (pred_instance.bboxes, pred_instance.scores[:, None]), axis=1)
     bboxes = bboxes[np.logical_and(pred_instance.labels == args.det_cat_id,
@@ -44,6 +48,9 @@ def process_one_image(args,
     # predict keypoints
     pose_results = inference_topdown(pose_estimator, img, bboxes)
     data_samples = merge_data_samples(pose_results)
+    
+    pos_end_inference = time.time()
+    # logger.info(f'run pos model infer cost time: {(pos_end_inference - det_end_inference) * 1000} ms')
 
     # show the results
     if isinstance(img, str):
@@ -66,6 +73,8 @@ def process_one_image(args,
             kpt_thr=args.kpt_thr)
 
     # if there is no instance detected, return None
+    end = time.time()
+    # logger.info(f'Inference one image cost time: {(end - start) * 1000} ms')
     return data_samples.get('pred_instances', None)
 
 
@@ -175,6 +184,7 @@ def main():
             f'{os.path.splitext(os.path.basename(args.input))[0]}.json'
 
     # build detector
+    logger.info("device {}", args.device)
     detector = init_detector(
         args.det_config, args.det_checkpoint, device=args.device)
     detector.cfg = adapt_mmdet_pipeline(detector.cfg)
@@ -193,10 +203,19 @@ def main():
     pose_estimator.cfg.visualizer.line_width = args.thickness
     visualizer = VISUALIZERS.build(pose_estimator.cfg.visualizer)
     # the dataset_meta is loaded from the checkpoint and
-    # then pass to the model in init_pose_estimator
+    # TODO delete later
+    skeleton_links = pose_estimator.dataset_meta['skeleton_links']
+    # logger.info("meta {}", pose_estimator.dataset_meta)
+    skeleton_links = skeleton_links[:5]
+    skeleton_links =  [(5, 7), (7, 9), (6, 8), (8, 10), (1, 2), (1, 3), (2, 4), (3, 5), (4, 6)]
+    # logger.info(f'skeleton_links first 5: {skeleton_links}')
+    pose_estimator.dataset_meta['skeleton_links'] = skeleton_links
+    pose_estimator.dataset_meta['skeleton_link_colors'] = pose_estimator.dataset_meta['skeleton_link_colors'][:len(skeleton_links)]
     visualizer.set_dataset_meta(
         pose_estimator.dataset_meta, skeleton_style=args.skeleton_style)
 
+    start = time.time()
+    logger.info(f'topdown args {vars(args)}')
     if args.input == 'webcam':
         input_type = 'webcam'
     else:
@@ -236,7 +255,7 @@ def main():
             # topdown pose estimation
             pred_instances = process_one_image(args, frame, detector,
                                                pose_estimator, visualizer,
-                                               0.001)
+                                               0)
 
             if args.save_predictions:
                 # save prediction results
@@ -247,6 +266,8 @@ def main():
 
             # output videos
             if output_file:
+                # TODO delete later
+                # continue
                 frame_vis = visualizer.get_image()
 
                 if video_writer is None:
@@ -287,6 +308,12 @@ def main():
                 indent='\t')
         print(f'predictions have been saved at {args.pred_save_path}')
 
+    end = time.time()
+    logger.info(f'Inference total time: {end - start}')
+
 
 if __name__ == '__main__':
+    start = time.time()
     main()
+    end = time.time()
+    logger.info(f'run main total time: {end - start}')

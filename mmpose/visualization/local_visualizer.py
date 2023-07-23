@@ -366,7 +366,7 @@ class PoseLocalVisualizer(OpencvBackendVisualizer):
                 for sk in self.skeleton:
                     need_kpt_ids.add(sk[0])
                     need_kpt_ids.add(sk[1])
-                print(f'need_kpt_ids: {need_kpt_ids}')
+                # print(f'need_kpt_ids: {need_kpt_ids}')
                 # draw each point on image
                 for kid, kpt in enumerate(kpts):
                     if score[kid] < kpt_thr or not visible[

@@ -134,3 +134,7 @@ docs/**/modelzoo.md
 td-hm_hrnet-w48_8xb32-210e_coco-256x192.py
 vis_results/
 vis_results.jpg
+test_results/
+*.mp4
+profile.speedscope
+rtmpose-cpu.zip
